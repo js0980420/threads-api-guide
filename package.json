@@ -1,0 +1,13 @@
+{
+  "name": "threads-api-guide",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18.17" },
+  "scripts": {
+    "test": "node --test tests/",
+    "setup": "node scripts/threads-setup.mjs",
+    "publish:threads": "node scripts/threads-publish.mjs",
+    "refresh": "node scripts/threads-refresh-token.mjs"
+  }
+}
