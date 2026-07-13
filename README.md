@@ -38,7 +38,7 @@ node scripts/threads-publish.mjs --video https://cdn.example.com/a.mp4 --text "c
 
 | 指令 | 作用 | 主要參數 |
 |---|---|---|
-| `node scripts/threads-setup.mjs` | 串接:換 token → 驗證 → 寫 .env | `--token` `--secret` `--test-post` `--json` |
+| `node scripts/threads-setup.mjs` | 串接:換 token → 驗證 → 寫 .env | `--token` `--test-post` `--json` |
 | `node scripts/threads-publish.mjs` | 發一篇(text/image/video) | `--text` `--image <URL>` `--video <URL>` `--dry-run` `--json` |
 | `node scripts/threads-refresh-token.mjs` | 手動續期(救援用,平常自動) | `--force` `--json` |
 

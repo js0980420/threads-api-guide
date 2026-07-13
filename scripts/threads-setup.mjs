@@ -1,39 +1,54 @@
 #!/usr/bin/env node
 /**
  * scripts/threads-setup.mjs — 串接 Threads:
- * short-lived token → 換 60 天 long-lived → 驗證 /me → 寫 .env(不存 App Secret)
+ * short-lived token → 換 60 天 long-lived → 驗證 /me → 寫 .env
+ * 應用程式密鑰只從 .env 的 THREADS_APP_SECRET 讀取,不接受 CLI 參數或互動輸入。
  *
  * 手動前置五步(建 Meta App、拿 token)見 skills/threads-setup/SKILL.md。
  *
  * 用法:
- *   node scripts/threads-setup.mjs                      # 互動式貼 token / secret
- *   node scripts/threads-setup.mjs --token <SHORT> --secret <SECRET> [--test-post] [--json]
+ *   node scripts/threads-setup.mjs                      # 互動式貼短期存取權杖
+ *   node scripts/threads-setup.mjs --token <SHORT> [--test-post] [--json]
  */
 import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import {
   API_VERSION, api, diagnose, emit, ensureGitignoreHasEnv, exchangeToken,
-  expiresAtFrom, fetchMe, findEnvFile, parseArgs, saveEnvVars,
+  expiresAtFrom, fetchMe, findEnvFile, loadEnv, parseArgs, saveEnvVars,
 } from "./lib/threads-common.mjs";
 
 const opts = parseArgs(process.argv.slice(2));
 const json = opts.json === true;
+loadEnv();
 
 let shortToken = typeof opts.token === "string" ? opts.token : "";
-let secret = typeof opts.secret === "string" ? opts.secret : "";
+const secret = process.env.THREADS_APP_SECRET?.trim() ?? "";
 
-if ((!shortToken || !secret) && json) {
+if (opts.secret !== undefined) {
   process.exit(emit(
-    { ok: false, error: "MISSING_ARGS", action: "--json 模式必須同時提供 --token 與 --secret(互動式輸入僅限人類模式)" },
+    { ok: false, error: "SECRET_IN_CLI_NOT_ALLOWED", action: "安全起見不接受 --secret。請由使用者親自在 .env 設定 THREADS_APP_SECRET" },
     { json },
   ));
 }
 
-if (!shortToken || !secret) {
+if (!shortToken && json) {
+  process.exit(emit(
+    { ok: false, error: "MISSING_ARGS", action: "--json 模式必須提供 --token;應用程式密鑰由 .env 的 THREADS_APP_SECRET 讀取" },
+    { json },
+  ));
+}
+
+if (!secret) {
+  process.exit(emit(
+    { ok: false, error: "MISSING_APP_SECRET", action: "請由使用者親自在 .env 設定 THREADS_APP_SECRET;不要貼到終端參數、聊天或交給 AI" },
+    { json },
+  ));
+}
+
+if (!shortToken) {
   console.log("🔗 Threads 串接(手動前置五步見 skills/threads-setup/SKILL.md)\n");
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  if (!shortToken) shortToken = (await rl.question("貼上 short-lived token(取得後 1 小時內有效): ")).trim();
-  if (!secret) secret = (await rl.question("貼上 App Secret(只用來換 token,不會儲存): ")).trim();
+  shortToken = (await rl.question("貼上短期存取權杖(取得後立即使用): ")).trim();
   rl.close();
 }
 
@@ -50,12 +65,12 @@ try {
   const me = await fetchMe({ token: longToken });
   if (!json) console.log(`   ✅ 已連接 @${me.username}(id=${me.id})`);
 
-  // 3. 寫 .env(App Secret 用完即棄,不落地)
+  // 3. 寫 .env,保留使用者親自設定的 THREADS_APP_SECRET
   const envPath = findEnvFile() ?? path.join(process.cwd(), ".env");
   saveEnvVars(envPath, { THREADS_ACCESS_TOKEN: longToken, THREADS_TOKEN_EXPIRES_AT: expiresAt });
   const gi = ensureGitignoreHasEnv(path.dirname(envPath));
   if (!json) {
-    console.log(`3. 已寫入 ${envPath}(App Secret 未儲存)`);
+    console.log(`3. 已更新 ${envPath}(應用程式密鑰未顯示)`);
     if (gi.added) console.log("   ✓ 已自動在 .gitignore 加入 .env");
   }
 
