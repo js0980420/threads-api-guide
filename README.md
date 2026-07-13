@@ -3,7 +3,7 @@
 讓你的 AI(Claude Code、Cursor⋯任何 agent)安全串接 **Threads 官方 API**,自動發文。
 
 - **官方 API + 你自己的 Meta App + token 只存你電腦** — 不經過任何第三方服務
-- **AI 引導串接**:對你的 AI 說「幫我接 Threads,照 skills/threads-setup 做」,10 分鐘發出第一篇
+- **AI 引導串接**:對你的 AI 說「幫我接 Threads,照 skills/threads-setup 做」;找不到 Meta 中文按鈕時上傳截圖,AI 可依畫面指出位置
 - **token 無感續期**:發文時自動 refresh,兩個月內有發文就永不過期,不用 cron
 - **錯誤為 AI 設計**:`--json` 輸出 `error` + `action`,AI 拿到就知道下一步(哪一步做漏了、去哪排查)
 - **零依賴**:純 Node ≥ 18.17,三支 `.mjs`,沒有 node_modules
